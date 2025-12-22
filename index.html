@@ -3,10 +3,112 @@
 <head>
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <title>aktivitetsvelger</title>
+  <title>startpage</title>
   <link rel='stylesheet' href='style.css'>
 </head>
 <body>
-  <h1>Hva skal du gjøre i dag?</h1>
+  <div class='headline'>
+    <h1>Velkommen!</h1>
+    <div id='date' class='date' aria-live='polite'></div>
+  </div>
+  <main class='columns'>
+    <section class='column'>
+      <h2>Get up to speed</h2>
+      <h3>Weather in Stavanger</h3>
+      <div class='weather' id='weather'>
+        <div class='weather-top'>
+          <div class='weather-description' id='weather-description'>Laster værdata...</div>
+          <img id='weather-icon' class='weather-icon' alt='' />
+        </div>
+        <div class='weather-row'><span class='label'>Temperature:</span> <span id='weather-temp'>-</span></div>
+        <div class='weather-row'><span class='label'>Wind speed:</span> <span id='weather-wind'>-</span></div>
+        <div class='weather-row'><span class='label'>Precipitation:</span> <span id='weather-precip'>-</span></div>
+        <div class='weather-row'><span class='label'>Humidity:</span> <span id='weather-humidity'>-</span></div>
+      </div>
+      <h3>News</h3>
+      <div class='news-box'>
+        <div class='news-row'>
+          <a href='https://www.aftenbladet.no/' target='_blank' rel='noopener'>Stavanger Aftenblad</a>
+          <img class='news-icon' src='resources/news/stvgaftenblad-logo.png' alt='Stavanger Aftenblad logo'>
+        </div>
+        <div class='news-row'>
+          <a href='https://www.nrk.no/' target='_blank' rel='noopener'>NRK</a>
+          <img class='news-icon' src='resources/news/nrk-logo.png' alt='NRK logo'>
+        </div>
+        <div class='news-row'>
+          <a href='https://www.vg.no/' target='_blank' rel='noopener'>VG</a>
+          <img class='news-icon' src='resources/news/vg-logo.png' alt='VG logo'>
+        </div>
+        <div class='news-row'>
+          <a href='https://www.tv2.no/' target='_blank' rel='noopener'>TV2</a>
+          <img class='news-icon' src='resources/news/tv2-logo.png' alt='TV2 logo'>
+        </div>
+      </div>
+    </section>
+    <section class='column'>
+      <h2>Work tools</h2>
+    </section>
+    <section class='column'>
+      <h2>Untitled</h2>
+    </section>
+  </main>
+  <script>
+    (function () {
+      var now = new Date();
+      var formatted = now.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      var el = document.getElementById('date');
+      if (el) el.textContent = formatted;
+    })();
+
+    (function () {
+      var descriptionEl = document.getElementById('weather-description');
+      var iconEl = document.getElementById('weather-icon');
+      var tempEl = document.getElementById('weather-temp');
+      var windEl = document.getElementById('weather-wind');
+      var precipEl = document.getElementById('weather-precip');
+      var humidityEl = document.getElementById('weather-humidity');
+      if (!descriptionEl || !tempEl || !windEl || !precipEl || !humidityEl || !iconEl) return;
+      fetch('http://127.0.0.1:8000/weather')
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          var description = data.weather && data.weather[0] && data.weather[0].description;
+          var icon = data.weather && data.weather[0] && data.weather[0].icon;
+          var temp = data.main && data.main.temp;
+          var wind = data.wind && data.wind.speed;
+          var humidity = data.main && data.main.humidity;
+          var precip =
+            (data.rain && (data.rain["1h"] || data.rain["3h"])) ||
+            (data.snow && (data.snow["1h"] || data.snow["3h"])) ||
+            null;
+
+          descriptionEl.textContent = description ? description : "No description";
+          if (icon) {
+            iconEl.src = "https://openweathermap.org/img/wn/" + icon + "@2x.png";
+            iconEl.alt = description ? description : "Weather icon";
+          } else {
+            iconEl.removeAttribute("src");
+            iconEl.alt = "";
+          }
+          tempEl.textContent = (typeof temp === "number") ? temp.toFixed(1) + " °C" : "None";
+          windEl.textContent = (typeof wind === "number") ? wind.toFixed(1) + " m/s" : "None";
+          precipEl.textContent = (typeof precip === "number") ? precip + " mm" : "None";
+          humidityEl.textContent = (typeof humidity === "number") ? humidity + " %" : "None";
+        })
+        .catch(function (err) {
+          descriptionEl.textContent = 'Feil ved henting av værdata: ' + err;
+          iconEl.removeAttribute("src");
+          iconEl.alt = "";
+          tempEl.textContent = 'None';
+          windEl.textContent = 'None';
+          precipEl.textContent = 'None';
+          humidityEl.textContent = 'None';
+        });
+    })();
+  </script>
 </body>
 </html>
